@@ -127,7 +127,7 @@ classdef SLMPixelGroup < handle
             end
         end
        
-        function result = makeGrating(object, gratingType, lengthOfGradient, highestValue)
+        function result = makeGrating(object, gratingType, varargin)
             %             This function overlays a grating over the pixel group.
             %                 @object : the object to which the grating will be added.
             %                 @value : the type of grating of the group.
@@ -142,6 +142,17 @@ classdef SLMPixelGroup < handle
             
             result = -1; %Default value if varargin is empty.
             %Module
+            if (isempty(varargin))
+                switch(gratingType)
+                    case object.X_GRATING_NAMES
+                        object.linearGrating(object.lines, object.columns,1,0);
+                    case object.Y_GRATING_NAMES
+                        object.linearGrating(object.columns, object.lines,0,0);
+                    otherwise
+                        errorNotice.message = ['There was no such grating type! The grating type received was : ', num2str(gratingType), ' which should be of type char and was of type ', class(gratingType),'!'];
+                        errorNotice.identifier= 'SLMPixelGroup:NoSuchGratingType';
+                        error(errorNotice);
+                end
             elseif (length(varargin) == 2)
                lengthOfGradient = varargin{1};
                startingValue = varargin{2};
@@ -344,25 +355,20 @@ classdef SLMPixelGroup < handle
             for i = 0:numberOfDecrements
                 vector = [vector lineValue];
                 lineValue = lineValue*~(lineValue>=SLMPixel.getMaximumGrayscale);
-                lineValue = lineValue + highestValue/numberOfDecrements;
+                lineValue = lineValue + SLMPixel.getMaximumGrayscale/numberOfDecrements;
             end
                         display('making grating')
                         display(vector)
                         display(varient)
-                        display(varientNegative)
             %Put the gradient in the array.
-            vectorPosition = 1 +(length(vector)-1)*(varientNegative<0);
+            vectorPosition = 1 +(length(vector)-1)*(varientNegative);
             for i = 1:varient
                 for j = 1:constant
                     object.pixelGroup(i,j).setGrayscale(vector(vectorPosition));
-                    if (varientNegative<0)
-                        if (vectorPosition == 1)
-                            vectorPosition = length(vector);
-                        else 
-                            vectorPosition = vectorPosition - 1;
-                        end
-                    else
+                    if (varientNegative)
                         vectorPosition = (vectorPosition)*(vectorPosition ~= length(vector)) + 1;
+                    else
+                        vectorPosition = (vectorPosition)*(vectorPosition ~= 0) - 1;
                     end
                 end
             end
