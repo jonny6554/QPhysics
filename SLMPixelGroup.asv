@@ -158,7 +158,7 @@ classdef SLMPixelGroup < handle
                 errorNotice.identifier= 'SLMPixelGroup:ValuesMustBeNumeric';
                 error(errorNotice);
             else
-                errorNotice.message = ['The highest value must be bigger than zero but it was ', num2str(highestValue),'.'];
+                errorNotice.message = ['The highest value must be bigger than zero but it was', num2str(highestValue),'.'];
                 errorNotice.identifier= 'SLMPixelGroup:NoSuchGratingType';
                 error(errorNotice);
             end
@@ -361,15 +361,14 @@ classdef SLMPixelGroup < handle
             end
             %Module
             %Make vector that represents the matrix
-            if (maxVarient ~= 0 && maxVarient ~= 1 && object.lines ~= 1 && object.columns ~=1)
+            if (maxVarient ~= 0 && maxVarient ~= 1 && (object.lines ~= 1 || object.columns ~=1))
                 for i = 0:numberOfDecrements
                     vector = [vector lineValue];
                     lineValue = lineValue*~(lineValue>=SLMPixel.getMaximumGrayscale);
                     lineValue = lineValue + highestValue/numberOfDecrements;
                 end
             elseif (object.lines == 1 || object.columns ==1)
-                lineValue = lineValue + highestValue/numberOfDecrements;
-                vector = lineValue;
+                
             elseif (maxVarient == 1)
                 vector = SLMPixel.getMinimumGrayscale();
             else
