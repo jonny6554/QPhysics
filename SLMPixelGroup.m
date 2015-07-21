@@ -127,7 +127,7 @@ classdef SLMPixelGroup < handle
             end
         end
        
-        function result = makeGrating(object, gratingType, lengthOfGradient, highestValue)
+        function makeGrating(object, gratingType, lengthOfGradient, highestValue)
             %             This function overlays a grating over the pixel group.
             %                 @object : the object to which the grating will be added.
             %                 @value : the type of grating of the group.
@@ -137,26 +137,25 @@ classdef SLMPixelGroup < handle
             %                 indicates the length of the gradient. The
             %                 second argument indicates the starting
             %                 gradient value.
-            %                 @result: the last gradient value. Negative one if
-            %                 varargin is emmpty
             
-            result = -1; %Default value if varargin is empty.
             %Module
-            elseif (length(varargin) == 2)
-               lengthOfGradient = varargin{1};
-               startingValue = varargin{2};
-               switch(gratingType)
+            if (object.isNumeric(lengthOfGradient, highestValue) && object.isWhole(lengthOfGradient, highestValue) && highestValue > 0)
+               switch(num2str(gratingType))
                     case object.X_GRATING_NAMES
-                        object.linearGrating(object.lines, lengthOfGradient,1,startingValue);
+                        object.linearGrating(lengthOfGradient, highestValue, 1);
                     case object.Y_GRATING_NAMES
-                        object.linearGrating(object.columns, lengthOfGradient,0,startingValue);
+                        object.linearGrating(lengthOfGradient, highestValue, 0);
                     otherwise
                         errorNotice.message = ['There was no such grating type! The grating type received was : ', num2str(gratingType), ' which should be of type char and was of type ', class(gratingType),'!'];
                         errorNotice.identifier= 'SLMPixelGroup:NoSuchGratingType';
                         error(errorNotice);
-                end
+               end
+            elseif ~(object.isNumeric(lengthOfGradient, highestValue) && object.isWhole(lengthOfGradient, highestValue))
+                errorNotice.message = ['The values given should be whole numbers of type double and whole but were: ', 'length of gradient: (', class(lengthOfGradient),') ', num2str(lengthOfGradient),', highest value: (', class(highestValue) ') ', num2str(highestValue), '.'];
+                errorNotice.identifier= 'SLMPixelGroup:ValuesMustBeNumeric';
+                error(errorNotice);
             else
-                errorNotice.message = ['Incorrect number of arguments. There can only be 0 or 2 arguments and there were ', num2str(nargin),'!'];
+                errorNotice.message = ['The highest value must be bigger than zero but it was', num2str(highestValue),'.'];
                 errorNotice.identifier= 'SLMPixelGroup:NoSuchGratingType';
                 error(errorNotice);
             end
@@ -319,17 +318,15 @@ classdef SLMPixelGroup < handle
             end
         end
         
-        function linearGrating(object, maxConstant, maxVarient, flip, highestValue)
+        function linearGrating(object, maxVarient, highestValue, flip)
             %             Creates a grating along the x or the y axis.
             %                 @object : The object making the call.
-            %                 @maxConstant : The number of pixels with identical values in
-            %                 the linear gradient.
             %                 @maxVarirent : The numbre of pixels with differing values
             %                 in the linear gradient.
             %                 @flip: when true, the grating is made along the length of
             %                 the screen. When false, the grating is made along the
             %                 height of the screen.
-            %                 @startingValue : the starting value of the gradient.        
+            %                 @highestValue : the highest value of the gradient.        
 
             %(Declaration and definition of variables)
             varientNegative = -1+2*(maxVarient>0);
@@ -346,10 +343,6 @@ classdef SLMPixelGroup < handle
                 lineValue = lineValue*~(lineValue>=SLMPixel.getMaximumGrayscale);
                 lineValue = lineValue + highestValue/numberOfDecrements;
             end
-                        display('making grating')
-                        display(vector)
-                        display(varient)
-                        display(varientNegative)
             %Put the gradient in the array.
             vectorPosition = 1 +(length(vector)-1)*(varientNegative<0);
             for i = 1:varient
