@@ -20,28 +20,29 @@ classdef SLMPixelArray < handle
        groupArray; %The array of the SLMPixelGroups.
     end
     methods
-       function object = SLMPixelArray(numberOfSubGroups, m, n, posM, posN)
+       function object = SLMPixelArray(numberOfSubgroups, sizeM, sizeN, posM, posN)
 %             This is the constructor of the class; it initializes the values
 %             of the object.
 %                 @object: the object being created.
 %                 @numberOfSubGroups: the number of groups to be overlayed.
           %Module.
-          if (object.isWhole(numberOfSubGroups, m, n, posM, posN) && numberOfSubGroups > 0 && m > 0 && n > 0 && posM >= 0 && posN >= 0)
+          if (object.isWhole(numberOfSubgroups, sizeM, sizeN, posM, posN) && numberOfSubgroups > 0 && sizeM > 0 && sizeN > 0 && posM >= 0 && posN >= 0)
+             object.groupArray = SLMPixelGroup.empty(0, numberOfSubgroups);
              object.positionM = posM;
              object.positionN = posN;
-             for i = 1:numberOfSubGroups
+             for i = 1:numberOfSubgroups
                  if (i ==1)
-                    object.groupArray =  SLMPixelGroup(m, n, 1/numberOfSubGroups);
+                    object.groupArray =  SLMPixelGroup(sizeM, sizeN, 1/numberOfSubgroups);
                  else
-                    object.groupArray = [object.groupArray, SLMPixelGroup(m, n, 1/numberOfSubGroups)];
+                    object.groupArray = [object.groupArray, SLMPixelGroup(sizeM, sizeN, 1/numberOfSubgroups)];
                  end
              end
-          elseif ~(object.isWhole(numberOfSubGroups, m, n, posM, posN))
-               errorNotice.message = ['All of the following numbers should be whole but they are not whole: number of sub-groups: ', num2str(numberOfSubGroups),', number of lines: ', num2str(m), ', number of columns: ', num2str(n), ', the line position in the figure: ' num2str(posM), ', the column position in the figure: ', num2str(posN), '!'];
+          elseif ~(object.isWhole(numberOfSubgroups, sizeM, sizeN, posM, posN))
+               errorNotice.message = ['All of the following numbers should be whole but they are not whole: number of sub-groups: ', num2str(numberOfSubgroups),', number of lines: ', num2str(sizeM), ', number of columns: ', num2str(sizeN), ', the line position in the figure: ' num2str(posM), ', the column position in the figure: ', num2str(posN), '!'];
                errorNotice.identifier= 'SLMPixelArray:InvalidParameterTypeForConstruction';
                error(errorNotice);
           else
-               errorNotice.message = ['Some of the following number(s) are negative: number of sub-groups: ', num2str(numberOfSubGroups),', number of lines: ', num2str(m), ', number of columns: ', num2str(n), ', the line position in the figure: ' num2str(posM), ', the column position in the figure: ', num2str(posN), '!'];
+               errorNotice.message = ['Some of the following number(s) are negative: number of sub-groups: ', num2str(numberOfSubgroups),', number of lines: ', num2str(sizeM), ', number of columns: ', num2str(sizeN), ', the line position in the figure: ' num2str(posM), ', the column position in the figure: ', num2str(posN), '!'];
                errorNotice.identifier= 'SLMPixelArray:NegativeNumbersCannotBePresentDuringConstruction';
                error(errorNotice);
           end
@@ -127,17 +128,66 @@ classdef SLMPixelArray < handle
           %(Declaration and dictionaray) of vairables.
           size = object.groupArray(1).getSize(); %The size of the arrays.
           result = SLMPixelGroup(size(1), size(2), 1, 0); %The combined group.
+          totalOverlayPercent = 0; %Algorithm will not add any of the groups that come after this value reaches 1.
           %Module
           for i=1:length(object.groupArray)
               currentObject = object.groupArray(i);
+              totalOverlayPercent = totalOverlayPercent + currentObject.getOverlayPercent();
+              if (totalOverlayPercent > 1)
+                 difference = totalOverlayPercent-1;
+                 currentOverlayPercent = currentObject.getOverlayPercent()-difference;
+              else
+                 currentOverlayPercent = currenObject.getOverlayPercent();
+              end
               for m = 1:size(1) 
                   for n = 1:size(2)
-                      newValue = result.getValue(m,n) + currentObject.getOverlayPercent()*currentObject.getValue(m,n);
+                      newValue = result.getValue(m,n) + currentOverlayPercent*currentObject.getValue(m,n);
                       result.setValue(m, n, newValue); 
                   end
               end
+              if (totalOverlayPercent >= 1)
+                 break; 
+              end
           end
        end
+       
+       function makeGrating(object, type, number, lengthOfGradient, varargin)
+           %Makes a gradient pixel group at the given location in the pixel array.
+           %    @object: the current pixel group array in which a gradient
+           %    pixel group shall be created. 
+           %    @number : the location where the pixel group will be created. 
+           %    @gratingType : the type of graritng. 
+           %    @lengthOfGradient : indicates the length of the gradient. 
+           %    @varargin : when there is 1 more arguments, The maximum 
+           %    value that the gradient is projected towards may be changed.
+           
+           %Module
+               object.groupArray(number).makeGrating(type, lengthOfGradient, varargin);
+       end
+       
+       function makeGray(object, number, colourValue)
+          %Sets the gray value to a particular value.
+          %     @object : the pixel array in which the group array that will be set to a particular value is found.
+          %     @number : the group that will be sets' location in the group pixel array.
+          %     @colourValue : the grayscale value that the group will be
+          %     set to.
+           
+          object.getGroupArray(number).setTo(colourValue);
+       end
+       
+       function changeOverlayPercent(object, number, overlayPercent)
+           %Changes the overlay percent at a particular location.
+           %    @object: the pixel array in which the group of pixels' overlay 
+           %    percent to be changed will be found.
+           %    @number: the location of the group in the pixel array for
+           %    which the overlay percent will be changed
+           %    @overlayPercent : the new overlay percent.
+           
+           %Module
+           object.groupArray(number).setOverlayPercent(overlayPercent);
+       end
+       
+       %Methods to assist during testing:
        
        function testCombine(object)
           %%%%%%%%%%%%%%%%%%%%%%%%%%%ONLY FOR TESTING%%%%%%%%%%%%%%%%%%%%%%%%
@@ -163,7 +213,21 @@ classdef SLMPixelArray < handle
        end
     end
     methods (Access = private)
-        function result = isWhole(~,varargin)
+        function result = getGroupArray(number)
+            if (object.isNumeric(number) && object.isWhole(number) && number > 0 && number < length(object.groupArray))
+               result = object.groupArray(number);
+           elseif ~(object.isNumeric(number) && object.isWhole(number))
+               errorNotice.message = ['The numerical location of the group to which the gradient will be applied should be a double and whole but it was', class(number),'(numerical location = ' , num2str(number),').'];
+               errorNotice.identifier= 'SLMPixelArray:InvalidIdentifierType.';
+               error(errorNotice);
+           else
+               errorNotice.message = ['The numerical location must be between 0 and ', num2str(length(object.groupArray)),' but was ', num2str(number),'.'];
+               errorNotice.identifier= 'SLMPixelArray:NoSuchElementInArray';
+               error(errorNotice);
+           end
+        end
+        
+        function result = isWhole(~, varargin)
 %           Verifies that the property is a whole number.
 %                 @~, ignores the SLMPixelGroup object since it is unused.
 %                 @varargin: Indicates a variable number of arguments.
@@ -171,9 +235,26 @@ classdef SLMPixelArray < handle
             result = 1;
             if ~isempty(varargin)
                 for i = 1:length(varargin)
-                   result = result && ~mod(varargin{i},1);
+                    if (~isempty(varargin{i}))
+                        result = result && ~mod(varargin{i},1);
+                    end
                 end
             else
+                result =0;
+            end
+        end
+        
+        function result = isNumeric(~, varargin)
+            %             Indicates whether or not the input(s) is of a numerical type.
+            %                 @~ignore the input of the object calling the function.
+            %                 @varargin : the array of arguments entered.
+            result = 1;
+            %Module
+            if ~isempty(varargin)
+                for i = 1:length(varargin)
+                    result = result && isnumeric(varargin{i});
+                end
+            else 
                 result =0;
             end
         end
