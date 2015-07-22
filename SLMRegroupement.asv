@@ -34,7 +34,8 @@ classdef SLMRegroupement < handle
            %Module
            if (object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length) && groupsM < width && groupsN < length)
                %Set values of the class.
-               SLMPixelArray.empty(0, groupsN)
+               object.regroupement = SLMPixelArray.empty(0, groupsN);
+               newArray = SLMPixelArray.empty(0, groupsN);
                object.groupsM = groupsM;
                object.groupsN = groupsN;
                object.width = width;
@@ -48,9 +49,14 @@ classdef SLMRegroupement < handle
                    %Initialize regroupement or pixel arrays.
                    for i = 1:groupsM
                        for j = 1:groupsN
-                           object.regroupement(i,j) = SLMPixelArray(1, divisionM, divisionN, i, j);
+                           if (j == 1)
+                                newArray = SLMPixelArray(1, divisionM, divisionN, i, j);
+                           else
+                                newArray = horzcat(newArray, SLMPixelArray(1, divisionM, divisionN, i, j));
+                           end
                            divisionN = divisionN + remainderN*(j == groupsN);
                        end
+                       object.regroupement = vertcat(object.regroupement, newArray);
                        divisionM = divisionM + remainderM*(i == groupsM);
                    end
                elseif ~(object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length))
@@ -102,22 +108,26 @@ classdef SLMRegroupement < handle
            end
        end
        
-       function show(object)
-           %RETURNS ARRAY REPRESENTING NUMERICALLY THE REGROUPEMENT.
+       function result = show(object)
+           %Returns an array that represents the current state of the
+           %objects in the regroupement.
+           %    @object : the regroupement for which a numerical
+           %    representation is sought.
            
            %(Declaration and definition) of variables.
-           columns = SLMPixelArray.empty(0, object.groupsN);
-           result = SLMPixelArray.empty(0, object.groupsN);
            %Module.
-           for i = object.groupsM
-               for j = object.groupsN
+           for i = 1:object.groupsM
+               for j = 1:object.groupsN
+                   
                    currentObject = object.getArray(i,j);
-                   columns = horzcat(columns, currentObject);
+                   if (isempty(result))
+                       columnValues = [result, currentObject.numerisize()]
+                   end
+                   columnValues = [result, currentObject.numerisize()];
+                   
                end
-               result = vertcat(result, columns);
+               result = vertcat(result, columnValues);
            end
-           %Display's result.
-           display(result);
        end
    end
    methods (Access = private)

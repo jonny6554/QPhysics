@@ -34,7 +34,8 @@ classdef SLMRegroupement < handle
            %Module
            if (object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length) && groupsM < width && groupsN < length)
                %Set values of the class.
-               SLMPixelArray.empty(0, groupsN)
+               object.regroupement = SLMPixelArray.empty(0, groupsN);
+               newArray = SLMPixelArray.empty(0, groupsN);
                object.groupsM = groupsM;
                object.groupsN = groupsN;
                object.width = width;
@@ -48,9 +49,14 @@ classdef SLMRegroupement < handle
                    %Initialize regroupement or pixel arrays.
                    for i = 1:groupsM
                        for j = 1:groupsN
-                           object.regroupement(i,j) = SLMPixelArray(1, divisionM, divisionN, i, j);
+                           if (j == 1)
+                                newArray = SLMPixelArray(1, divisionM, divisionN, i, j);
+                           else
+                                newArray = horzcat(newArray, SLMPixelArray(1, divisionM, divisionN, i, j));
+                           end
                            divisionN = divisionN + remainderN*(j == groupsN);
                        end
+                       object.regroupement = vertcat(object.regroupement, newArray);
                        divisionM = divisionM + remainderM*(i == groupsM);
                    end
                elseif ~(object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length))
@@ -109,15 +115,23 @@ classdef SLMRegroupement < handle
            %    representation is sought.
            
            %(Declaration and definition) of variables.
-           columns = SLMPixelArray.empty(0, object.groupsN);
-           result = SLMPixelArray.empty(0, object.groupsN);
            %Module.
-           for i = object.groupsM
-               for j = object.groupsN
+           result = zeros(0,object.length);
+           columnValues = zeros(object.width,0);
+           for i = 1:object.groupsM
+               for j = 1:object.groupsN
+                   
                    currentObject = object.getArray(i,j);
-                   columns = horzcat(columns, currentObject);
+                   if (isempty(result))
+                       if (isempty(columnValues))
+                            columnValues = currentObject.numericize();
+                       else
+                            columnValues = horzcat(columnValues, currentObject.numericize());
+                       end
+                   end
+                   
                end
-               result = vertcat(result, columns);
+               result = vertcat(result, columnValues);
            end
        end
    end

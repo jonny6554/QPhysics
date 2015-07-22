@@ -25,11 +25,14 @@ classdef SLMPixelArray < handle
 %             of the object.
 %                 @object: the object being created.
 %                 @numberOfSubGroups: the number of groups to be overlayed.
+
           %Module.
+          display(['numberOfSubgroups: ',num2str(numberOfSubgroups),' sizeM: ', num2str(sizeM),' sizeN: ', num2str(sizeN),' posM: ', num2str(posM),' posN: ', num2str(posN)])
           if (object.isWhole(numberOfSubgroups, sizeM, sizeN, posM, posN) && numberOfSubgroups > 0 && sizeM > 0 && sizeN > 0 && posM >= 0 && posN >= 0)
+             
              object.groupArray = SLMPixelGroup.empty(0, numberOfSubgroups);
              object.positionM = posM;
-             object.positionN = posN;
+             object.positionN = posN; 
              for i = 1:numberOfSubgroups
                  if (i ==1)
                     object.groupArray =  SLMPixelGroup(sizeM, sizeN, 1/numberOfSubgroups);
@@ -37,6 +40,7 @@ classdef SLMPixelArray < handle
                     object.groupArray = [object.groupArray, SLMPixelGroup(sizeM, sizeN, 1/numberOfSubgroups)];
                  end
              end
+             
           elseif ~(object.isWhole(numberOfSubgroups, sizeM, sizeN, posM, posN))
                errorNotice.message = ['All of the following numbers should be whole but they are not whole: number of sub-groups: ', num2str(numberOfSubgroups),', number of lines: ', num2str(sizeM), ', number of columns: ', num2str(sizeN), ', the line position in the figure: ' num2str(posM), ', the column position in the figure: ', num2str(posN), '!'];
                errorNotice.identifier= 'SLMPixelArray:InvalidParameterTypeForConstruction';
@@ -117,40 +121,7 @@ classdef SLMPixelArray < handle
                error(errorNotice);
            end
        end
-       
-       function result = show(object)
-%         Returns an SLMPixelGroup representing the combined result of the sub-groups.
-%                 @object: the object containing the array that shall be
-%                 combined.
-%                 @result: the combined array of the values of the
-%                 subgroups. Each subgroups contribution is indicated by the
-%                 groups overlay percent.
-          %(Declaration and dictionaray) of vairables.
-          size = object.groupArray(1).getSize(); %The size of the arrays.
-          result = SLMPixelGroup(size(1), size(2), 1, 0); %The combined group.
-          totalOverlayPercent = 0; %Algorithm will not add any of the groups that come after this value reaches 1.
-          %Module
-          for i=1:length(object.groupArray)
-              currentObject = object.groupArray(i);
-              totalOverlayPercent = totalOverlayPercent + currentObject.getOverlayPercent();
-              if (totalOverlayPercent > 1)
-                 difference = totalOverlayPercent-1;
-                 currentOverlayPercent = currentObject.getOverlayPercent()-difference;
-              else
-                 currentOverlayPercent = currenObject.getOverlayPercent();
-              end
-              for m = 1:size(1) 
-                  for n = 1:size(2)
-                      newValue = result.getValue(m,n) + currentOverlayPercent*currentObject.getValue(m,n);
-                      result.setValue(m, n, newValue); 
-                  end
-              end
-              if (totalOverlayPercent >= 1)
-                 break; 
-              end
-          end
-       end
-       
+              
        function makeGrating(object, type, number, lengthOfGradient, varargin)
            %Makes a gradient pixel group at the given location in the pixel array.
            %    @object: the current pixel group array in which a gradient
@@ -196,14 +167,13 @@ classdef SLMPixelArray < handle
        
        %Methods to assist during testing:
        
-       function testCombine(object)
-          %%%%%%%%%%%%%%%%%%%%%%%%%%%ONLY FOR TESTING%%%%%%%%%%%%%%%%%%%%%%%%
+       function result = numericize(object)
           %Displays numerical values representing the overlayed combination
           %of the class' values.
           %     @object: the current SLMPixelArray for testing
           
           %Module
-          display(object.show.test());
+          result = object.combine.numericize();
        end
        
        function testSubgroups(object)
@@ -220,6 +190,39 @@ classdef SLMPixelArray < handle
        end
     end
     methods (Access = private)
+        function result = combine(object)
+%         Returns an SLMPixelGroup representing the combined result of the sub-groups.
+%                 @object: the object containing the array that shall be
+%                 combined.
+%                 @result: the combined array of the values of the
+%                 subgroups. Each subgroups contribution is indicated by the
+%                 groups overlay percent.
+  %(Declaration and dictionaray) of vairables.
+  size = object.groupArray(1).getSize(); %The size of the arrays.
+  result = SLMPixelGroup(size(1), size(2), 1, 0); %The combined group.
+  totalOverlayPercent = 0; %Algorithm will not add any of the groups that come after this value reaches 1.
+  %Module
+  for i=1:length(object.groupArray)
+      currentObject = object.groupArray(i);
+      totalOverlayPercent = totalOverlayPercent + currentObject.getOverlayPercent();
+      if (totalOverlayPercent > 1)
+         difference = totalOverlayPercent-1;
+         currentOverlayPercent = currentObject.getOverlayPercent()-difference;
+      else
+         currentOverlayPercent = currentObject.getOverlayPercent();
+      end
+      for m = 1:size(1) 
+          for n = 1:size(2)
+              newValue = result.getPixelGrayscale(m,n) + currentOverlayPercent*currentObject.getPixelGrayscale(m,n);
+              result.setPixelGrayscale(m, n, newValue); 
+          end
+      end
+      if (totalOverlayPercent >= 1)
+         break; 
+      end
+  end
+end
+        
         function result = getGroupArray(number)
             if (object.isNumeric(number) && object.isWhole(number) && number > 0 && number < length(object.groupArray))
                result = object.groupArray(number);

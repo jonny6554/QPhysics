@@ -291,12 +291,10 @@ classdef SLMPixelGroup < handle
             result = size(object.pixelGroup);
         end
         
-        function result = numericize(object)
+        function result = numerisize(object)
         %             Returns an array of integers representing the gray values of
         %             the group.
-        %                 @object : the object for which a numrical representation is sought.            
         %                 @result : The gray values of the group.
-        
         result = zeros(object.lines, object.columns);
         %Module
         for i = 1:object.lines;
