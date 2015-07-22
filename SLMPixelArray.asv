@@ -191,7 +191,7 @@ classdef SLMPixelArray < handle
           %Returns the number of groups inside the array of pixel groups.
           %     @objet : The object for which the number of pixel groups is sought.
            
-          result = length(object.groupArray);
+          result = length(objefctgroupArray);
        end
        
        %Methods to assist during testing:
