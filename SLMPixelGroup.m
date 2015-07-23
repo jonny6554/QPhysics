@@ -1,5 +1,3 @@
-
-
 classdef SLMPixelGroup < handle
 %     This class is an SLMPixelGroupement. It allows the user to apply an action to multiple pixels, or one pixel, at a time. 
 %     It is possible to :
@@ -24,7 +22,7 @@ classdef SLMPixelGroup < handle
     properties (Constant, Access = private)
        DEFAULT_INITIAL_PIXEL_VALUE = 255; 
     end
-    methods
+    methods 
         function object = SLMPixelGroup(m, n, overlayPercent, varargin)
 %             The constructor of the class. When the pixel group is first
 %             initialized, it is assumed that the pixels are black. 
@@ -144,12 +142,12 @@ classdef SLMPixelGroup < handle
             end
             if (object.isNumeric(lengthOfGradient, highestValue) && object.isWhole(lengthOfGradient, highestValue) && highestValue > 0)
                switch(num2str(gratingType))
-                    case 1
+                    case '1'
                         object.linearGrating(lengthOfGradient, highestValue, 1);
-                    case 0
+                    case '0'
                         object.linearGrating(lengthOfGradient, highestValue, 0);
                     otherwise
-                        errorNotice.message = ['There was no such grating type! The grating type received was : ', num2str(gratingType), ' which should be of type char and was of type ', class(gratingType),'!'];
+                        errorNotice.message = ['There was no such grating type! The grating type received was : ', num2str(gratingType), ' which should be of type double and was of type ', class(gratingType),'!'];
                         errorNotice.identifier= 'SLMPixelGroup:NoSuchGratingType';
                         error(errorNotice);
                end
@@ -352,7 +350,7 @@ classdef SLMPixelGroup < handle
             numberOfDecrements = maxVarient-(maxVarient ~= 1 && maxVarient ~= 0)*1;
             lineValue = 0;
             vectorPosition = [];
-            vector = [];
+            vector = zeros(1,numberOfDecrements+1);
             function modifyVectorPosition(pos, constant)
                 %Subfunction used to modify the value of the
                 %vectorPosition. It changes depending on the gradient flip.
@@ -378,7 +376,7 @@ classdef SLMPixelGroup < handle
             %Make vector that represents the matrix
             if (maxVarient ~= 0 && maxVarient ~= 1 && object.lines ~= 1 && object.columns ~=1)
                 for i = 0:numberOfDecrements
-                    vector = [vector lineValue];
+                    vector(i+1) = lineValue;
                     lineValue = lineValue*~(lineValue>=SLMPixel.getMaximumGrayscale);
                     lineValue = lineValue + highestValue/numberOfDecrements;
                 end

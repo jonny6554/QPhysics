@@ -144,12 +144,15 @@ classdef SLMPixelArray < handle
        function makeGray(object, info)
           %Sets the gray value to a particular value.
           %     @object : the pixel array in which the group array that will be set to a particular value is found.
+          %     @number : the group that will be sets' location in the group pixel array.
+          %     @colourValue : the grayscale value that the group will be
+          %     set to.
           %     @info : the first value in the array is the group that will
-          %     be sets' location in the group pixel array and the second
-          %     is the grayscale value that the group will be set to.
-          if (length(info) == 2)
-                object.getGroup(cell2mat(info(1))).setTo(cell2mat(info(2)));
-          end
+          %     be sets' location in the group pixel array and the second 
+          %     the grayscale value that the group will be
+          %     set to.
+           
+          object.getGroup(number).setTo(colourValue);
        end
        
        function changeOverlayPercent(object, number, overlayPercent)

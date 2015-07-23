@@ -16,8 +16,8 @@ classdef SLMRegroupement < handle
        regroupement; %Contains the regroupement of the SLMPixelArrays.
        groupsM; %Indicates the number of lines.
        groupsN; %Indicates the number of groups.
-       width; %Indicates the width of the pixels.
-       length; %Indicates the length of the pixels.
+       pixWidth; %Indicates the width of the pixels.
+       pixLength; %Indicates the length of the pixels.
    end
    properties (Access = private, Constant)
        X_GRATING_NAMES = {'x','X','length'}; %Possible grating names. 
@@ -34,12 +34,12 @@ classdef SLMRegroupement < handle
            %Module
            if (object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length) && groupsM < width && groupsN < length)
                %Set values of the class.
-               object.regroupement = SLMPixelArray.empty(0, groupsN);
-               newArray = SLMPixelArray.empty(0, groupsN);
+               object.regroupement = SLMPixelArray;
+               object.regroupement(groupsM, groupsN) = SLMPixelArray;
                object.groupsM = groupsM;
                object.groupsN = groupsN;
-               object.width = width;
-               object.length = length;
+               object.pixWidth = width;
+               object.pixLength = length;
                %Initialize the regroupement.
                if (groupsM < length && groupsN < width)
                    divisionM = fix(width/groupsM); %Division 1
@@ -49,14 +49,9 @@ classdef SLMRegroupement < handle
                    %Initialize regroupement or pixel arrays.
                    for i = 1:groupsM
                        for j = 1:groupsN
-                           if (j == 1)
-                                newArray = SLMPixelArray(1, divisionM, divisionN, i, j);
-                           else
-                                newArray = horzcat(newArray, SLMPixelArray(1, divisionM, divisionN, i, j));
-                           end
+                           object.regroupement(i,j) = SLMPixelArray(1, divisionM, divisionN, i, j);
                            divisionN = divisionN + remainderN*(j == groupsN);
                        end
-                       object.regroupement = vertcat(object.regroupement, newArray);
                        divisionM = divisionM + remainderM*(i == groupsM);
                    end
                elseif ~(object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length))
@@ -81,31 +76,29 @@ classdef SLMRegroupement < handle
        %    @n : the position in columns where the arry are found.
        
        %Modificataions to necessary variables.
-           m = str2num(m);
-           n = str2num(n);
-           if (narargin > 0)
-              for i = 1:nargin
-                 varargin{i} = str2num(varargin{i});
+           m = SLMRegroupement.str2Num(m);
+           n = SLMRegroupement.str2Num(n);
+           if (~isempty(varargin))
+              for i = 1:length(varargin)
+                 varargin{i} = SLMRegroupement.str2Num(varargin{i});
               end
            end
-       
        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%TODO%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
        %Run a method that requests missing information so that the program
        %will not crash.
            
            %Module
-           try
                switch(num2str(command))
                    case object.X_GRATING_NAMES
-                        object.getArray(m, n).makeGrating(1, varargin);
+                       object.getArray(m, n).makeGrating(1, varargin);
                    case object.Y_GRATING_NAMES
-                        object.getArray(m, n).makeGrating(0, varargin);
+                       object.getArray(m, n).makeGrating(0, varargin);
                    case object.COLOUR_NAMES
-                        object.getArray(m, n).makeGray(varargin);
+                       if(length(varargin) == 2)
+                       object.getArray(m, n).makeGray(varargin);
+                       end
                end
-           catch
-              warning('Problem occured on during the call of the command.'); 
-           end
+           
        end
        
        function result = show(object)
@@ -116,22 +109,23 @@ classdef SLMRegroupement < handle
            
            %(Declaration and definition) of variables.
            %Module.
-           result = zeros(0,object.length);
-           columnValues = zeros(object.width,0);
+           result = zeros(object.pixWidth, object.pixLength);
+           previousM = 0;
+           previousN = 0;
            for i = 1:object.groupsM
                for j = 1:object.groupsN
-                   
                    currentObject = object.getArray(i,j);
-                   if (isempty(result))
-                       if (isempty(columnValues))
-                            columnValues = currentObject.numericize();
-                       else
-                            columnValues = horzcat(columnValues, currentObject.numericize());
+                   arrayToBeTreated = currentObject.numericize();
+                   currentSize = size(arrayToBeTreated);
+                   for k = 1:currentSize(1)
+                       for l = 1:currentSize(2)
+                           result((previousM)*(i-1) + k, (previousN)*(j-1) + l) = arrayToBeTreated(k,l);
                        end
                    end
-                   
+                   previousN = previousN + currentSize(2);
                end
-               result = vertcat(result, columnValues);
+               previousN = 0;
+               previousM = previousM + currentSize(1);
            end
        end
    end
@@ -176,6 +170,17 @@ classdef SLMRegroupement < handle
            %%%FUNCTION REQUEST'S INPUT FROM USER.
        end
        
+       function makeGrating(object, gratingNumber, varargin)
+           %Creates a grating on the
+           
+           %Module
+           if(length(varargin) == 2)
+               object.getArray(m, n).makeGrating(gratingNumber, varargin{1}, varargin{2});
+           elseif(length(varargin) == 3)
+               object.getArray(m, n).makeGrating(gratingNumber, varargin{1}, varargin{2}, varargin{3});
+           end
+       end
+       
        function result = isWhole(~,varargin)
 %           Verifies that the property is a whole number.
 %                 @~, ignores the SLMPixelGroup object since it is unused.
@@ -204,6 +209,23 @@ classdef SLMRegroupement < handle
             else 
                 result =0;
             end
-        end
+       end
+   end
+   methods (Access = private, Static)
+       function result = str2Num(string)
+           %When it is given a char containing a number and a number only, it returns that
+           %number. Otherwise it returns that char.
+           %    @string : the string of characters that may contain a number.
+           
+           value = []; %Value is by default empty. Contains the result.
+           %Module
+           if (ischar(string))
+               value = str2double(string);
+           end
+           if (isempty(value))
+               value = string;
+           end
+           result = value;
+       end
    end
 end
