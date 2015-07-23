@@ -95,13 +95,13 @@ classdef SLMRegroupement < handle
                        object.getArray(m, n).makeGrating(0, varargin);
                    case object.COLOUR_NAMES
                        if(length(varargin) == 2)
-                       object.getArray(m, n).makeGray(varargin);
+                            object.getArray(m, n).makeGray(varargin);
                        end
                end
            
        end
        
-       function result = show(object)
+       function result = numericize(object)
            %Returns an array that represents the current state of the
            %objects in the regroupement.
            %    @object : the regroupement for which a numerical
@@ -127,6 +127,22 @@ classdef SLMRegroupement < handle
                previousN = 0;
                previousM = previousM + currentSize(1);
            end
+       end
+       
+        function show(object)
+           %Dispays, on the current grafical figure, a representation of
+           %the image.
+           %    @object : the regroupement for which a graphical
+           %    representation is sought.
+           
+           %(Declaration and definition) of variables.
+           %Module.
+             image(object.numericize);pause(.001)
+        colormap(gray(255));
+        axis off
+        set(gca,'position',[0 0 1 1],'units','pixels')
+        axis off
+           imshow(object.numericize, [0, 255]);
        end
    end
    methods (Access = private)
