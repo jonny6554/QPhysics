@@ -137,14 +137,14 @@ classdef SLMRegroupement < handle
            
            %(Declaration and definition) of variables.
            %Module.
-           
-           imagesc(object.numericize())
- %          image(object.numericize());pause(.001)
-           colormap(gray(255));
-           axis off
-           set(gca,'position',[0 0 1 1],'units','pixels')
-   %      axis off
-      
+           xloc = linspace(-1, 1, 255);
+yloc = linspace(-1, 1, 256);
+image(xloc, yloc, I)
+          image(1:255, 1:255, object.numericize);
+          colormap(gray(255));
+          axis off
+          set(gca,'position',[0 0 1 1],'units','pixels')
+          axis off
          %imshow(object.numericize);
        end
    end

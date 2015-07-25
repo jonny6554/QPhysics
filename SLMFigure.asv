@@ -16,7 +16,7 @@ classdef SLMFigure < handle
        ScreenSize = get(0, 'Screensize') 
     end
     methods
-        function object = SLMFigure(figNumber, length, width)
+        function object = SLMFigure(figNumber, )
             %Constructor of the figure (Throws InvalidPositionValues and InvalidLengthValues)
             %   @object : the SLMFigure that will be constructed.
             %   @figNumber : the number of the figure that will be
