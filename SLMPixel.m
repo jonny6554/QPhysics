@@ -12,7 +12,7 @@ classdef SLMPixel < handle
         GRAY_MAX = 255; %Maximum value of a pixel (inclusive).
         GRAY_MIN = 0; %Minimum value of a pixel (inclusive).
     end
-    methods
+    methods 
         function object = SLMPixel(grayscale)
             %
             %    Constructs the object. On construction, the pixel is not selected.
@@ -71,15 +71,8 @@ classdef SLMPixel < handle
             %        @result : 1 if it is selected.
             result = object.selected;
         end
-        
-        function randomize(object)
-            %    Sets a random grayscale value to the pixel.
-            %        @object : The current pixel making the call.
-            object.grayscale = round(rand()*SLMPixel.GRAY_MAX) + SLMPixel.GRAY_MIN; 
-        end 
     end 
-    methods (Static)
-        
+    methods (Static) 
         function result = getMaximumGrayscale()
             %    Returns the maximum grayscale value in grayscale pixel value.
             result = SLMPixel.GRAY_MAX;

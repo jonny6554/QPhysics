@@ -106,7 +106,8 @@ classdef SLMPixelGroup < handle
             if (isempty(varargin))
             if (~isempty(object.pixelGroup))
                 %Declaration and definition of variables
-                randValue = round(rand()*SLMPixel.getMaximumGrayscale() + SLMPixel.getMinimumGrayscale()); %There should always be atleast 1 pixel.
+                object.grayscale = round(rand()*SLMPixel.getMaximumGrayscale() + SLMPixel.getMinimumGrayscale()); %There should always be atleast 1 pixel.
+                randValue = object.pixelGroup(1,1).getGrayscale(); %The new random value.
                 for i = 1:object.lines;
                     for j = 1:object.columns;
                         object.pixelGroup(i,j).setGrayscale(randValue);

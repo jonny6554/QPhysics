@@ -148,7 +148,7 @@ classdef SLMPixelArray < handle
           %     be sets' location in the group pixel array and the second
           %     is the grayscale value that the group will be set to.
           if (length(info) == 2)
-                object.getGroup(cell2mat(info(1))).setTo(cell2mat(info(2)));
+                object.getGroup(cell2mat(info(2))).setTo(cell2mat(info(1)));
           end
        end
        

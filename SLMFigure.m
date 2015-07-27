@@ -16,7 +16,7 @@ classdef SLMFigure < handle
        ScreenSize = get(0, 'Screensize') 
     end
     methods
-        function object = SLMFigure(figNumber, length, width)
+        function object = SLMFigure(figNumber, regroupement)
             %Constructor of the figure (Throws InvalidPositionValues and InvalidLengthValues)
             %   @object : the SLMFigure that will be constructed.
             %   @figNumber : the number of the figure that will be
@@ -26,9 +26,9 @@ classdef SLMFigure < handle
             
             %Module
             %Verifying that the length values entered are valid.
-            if (SLMFigure.isNumeric(length, width, figNumber) && SLMFigure.isWhole(length, width, figNumber))
-                object.ylength = width;
-                object.xlength = length;
+            if (SLMFigure.isNumeric(regroupement.pixLength, regroupement.pixWidth, figNumber) && SLMFigure.isWhole(regroupement.pixLength, regroupement.pixWidth, figNumber))
+                object.ylength = regroupement.pixWidth;
+                object.xlength = regroupement.pixLength;
                 object.windowNumber = figNumber;
             elseif ~(SLMFigure.isNumeric(figNumber) && SLMFigure.isWhole(figNumber)) %Verifying that the figure number entered is valid.
                 errorStruct.message = ' figure number of the window entered was not a double value but rather a ' + class(figNumber) +'!';
@@ -43,11 +43,7 @@ classdef SLMFigure < handle
             object.x = initialCoordinates(1);
             object.y = initialCoordinates(2);
             %Creating the figure
-            object.window = figure(object.windowNumber);
-            set(object.window,'menubar','none','units','pixels');
-            set(object.window,'Position',[object.x, object.y,object.xlength,object.ylength]); %Figure appears at initial coordinates
-            set(object.window,'Resize','off'); % Disable resizing 
-            set(object.window,'BackingStore','on'); %For fast drawing of the figure's contents
+            object.refresh();
         end
                 
         function close(object)
@@ -70,9 +66,10 @@ classdef SLMFigure < handle
             %Creating the figure
             object.window = figure(object.windowNumber);
             set(object.window,'menubar','none','units','pixels');
-            set(object.window,'Position',[initialCoordinates, object.xlength, object.ylength]); %Figure appears at initial coordinates
+                set(object.window,'Position',[initialCoordinates, object.xlength-1, object.ylength-1]); %Figure appears at initial coordinates
+
             set(object.window,'Resize','off'); % Disable resizing 
-            set(object.window,'BackingStore','on'); %For fast drawing of the figure's contents
+            set(object.window,'BackingStore','off'); %For fast drawing of the figure's contents
             if (~isempty(varargin))
                 if (isa(varargin{1}, 'SLMRegroupement')) %Display's the group.
                     varargin{1}.show();

@@ -18,6 +18,7 @@ classdef SLMRegroupement < handle
        groupsN; %Indicates the number of groups.
        pixWidth; %Indicates the width of the pixels.
        pixLength; %Indicates the length of the pixels.
+       currentState; %Matrix representing the current numerical values.
    end
    properties (Access = private, Constant)
        X_GRATING_NAMES = {'x','X','length'}; %Possible grating names. 
@@ -41,18 +42,20 @@ classdef SLMRegroupement < handle
                object.pixWidth = width;
                object.pixLength = length;
                %Initialize the regroupement.
-               if (groupsM < length && groupsN < width)
+               if (groupsM <= length && groupsN <= width)
                    divisionM = fix(width/groupsM); %Division 1
                    divisionN = fix(length/groupsN); %Division 2
                    remainderM =rem(width,groupsM); %Remainder of division 1
                    remainderN =rem(length,groupsN); %Remainder of division 2
                    %Initialize regroupement or pixel arrays.
                    for i = 1:groupsM
+                      divisionM = divisionM + remainderM*(i == groupsM);
                        for j = 1:groupsN
-                           object.regroupement(i,j) = SLMPixelArray(1, divisionM, divisionN, i, j);
                            divisionN = divisionN + remainderN*(j == groupsN);
+                           object.regroupement(i,j) = SLMPixelArray(1, divisionM, divisionN, i, j); 
+                           divisionN = divisionN - remainderN*(j == groupsN);
                        end
-                       divisionM = divisionM + remainderM*(i == groupsM);
+                       divisionM = divisionM - remainderM*(i == groupsM);
                    end
                elseif ~(object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length))
                    errorNotice.message = ['The following should all be of a numerical type and whole numbers : number of line groups = ', num2str(groupsM), ' (', class(groupsM),'), number of column groups = ', num2str(groupsN), ' (', class(groupsN),'), number of pixel lines = ', num2str(lines), ' (', class(lines),') and the number of pixel columns = ', num2str(columns), ' (', class(columns),').'];
@@ -86,7 +89,7 @@ classdef SLMRegroupement < handle
        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%TODO%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
        %Run a method that requests missing information so that the program
        %will not crash.
-           
+
            %Module
                switch(num2str(command))
                    case object.X_GRATING_NAMES
@@ -137,15 +140,30 @@ classdef SLMRegroupement < handle
            
            %(Declaration and definition) of variables.
            %Module.
-           xloc = linspace(-1, 1, 255);
-yloc = linspace(-1, 1, 256);
-image(xloc, yloc, I)
-          image(1:255, 1:255, object.numericize);
-          colormap(gray(255));
-          axis off
-          set(gca,'position',[0 0 1 1],'units','pixels')
-          axis off
+           val = object.numericize();
+           imagesc(val);
+ %          image(object.numericize());pause(.001)
+           colormap(gray(255));
+           axis off;
+           set(gca,'units','pixels','position',[0 0 object.pixWidth object.pixLength]); %Bottom left corner is 0,0
+   %      axis off
+      
          %imshow(object.numericize);
+       end
+       
+       function result = getPixLength(object)
+           result = object.pixLength;
+       end
+       
+       function result = getPixWidth(object)
+           result = object.pixWidth;
+       end
+       
+       function update(object)
+          if (~isempty)
+          else
+              
+          end
        end
    end
    methods (Access = private)
