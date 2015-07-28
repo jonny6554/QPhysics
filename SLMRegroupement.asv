@@ -21,9 +21,13 @@ classdef SLMRegroupement < handle
        currentState; %Matrix representing the current numerical values.
    end
    properties (Access = private, Constant)
+       %For exectution of commands
        X_GRATING_NAMES = {'x','X','length'}; %Possible grating names. 
        Y_GRATING_NAMES = {'y','Y','width','height'}; %Possible grating names.
        COLOUR_NAMES = {'c', 'C', 'colour', 'Colour'}; %Possible colour names.
+       %For the execution of optimization algorithms.
+       LINEAR_OPTIMIZATION_RATE = 10; %The number of pixels that the optimization algorithm jumps over per iteration.
+       PAUSE_BETWEEN_OPTIMIZAITON_VALUES = 0.2; %The length of a pause between optimization values in seconds. 
    end
    methods 
        function object = SLMRegroupement(groupsM, groupsN, width, length)
@@ -101,7 +105,7 @@ classdef SLMRegroupement < handle
                        object.numericize(m,n);
                    case object.COLOUR_NAMES
                        if(length(varargin) == 2)
-                            object.getArray(m, n).makeGray(varargin);
+                            object.getArray(m, n).makeGray(varargin{1}, varargin{2});
                             object.numericize(m,n);
                        end
                        
@@ -123,13 +127,13 @@ classdef SLMRegroupement < handle
            arrayToBeTreated = currentObject.numericize();
            currentSize = size(arrayToBeTreated);
            if (m ~= 1)
-               for i=1:m
+               for i=1:(m-1)
                    currentObject = object.getArray(i,1);
                    distanceM = distanceM + currentObject.getWidth();
                end
            end
            if (n ~= 1)
-               for i = 1:n
+               for i = 1:(n-1)
                    currentObject = object.getArray(1,i);
                    distanceN = distanceN + currentObject.getLength();
                end
@@ -152,8 +156,8 @@ classdef SLMRegroupement < handle
            val = object.currentState();
            imagesc(val);
  %         image(object.numericize());pause(.001)
-           colormap(gray(255));
-           set(gca, 'CLim', [0, 1]); %Makes the colormap limits minimum 0 and the maximum 1. (otherwise -1 and 1)
+           colormap(gray(SLMPixel.getMaximumGrayscale())); %Sets colormap to gray values.
+           set(gca, 'CLim', [SLMPixel.getMinimumGrayscale(), SLMPixel.getMaximumGrayscale()]); %Makes the colormap limits minimum 0 and the maximum 1. (otherwise -1 and 1)
            axis off;
            set(gca,'units','pixels','position',[0 0 object.pixWidth object.pixLength]); %Bottom left corner is 0,0
    %      axis off
@@ -162,20 +166,120 @@ classdef SLMRegroupement < handle
        end
        
        function result = getPixLength(object)
+          %Returns the length in pixels of the regroupement.
+           %    @object : the object for which the length is sought.
+           
+           %Module
            result = object.pixLength;
        end
        
        function result = getPixWidth(object)
+           %Returns the width in pixels of the regroupement.
+           %    @object : the object for which the width is sought.
+           
+           %Module
            result = object.pixWidth;
        end
+           
+       function optimizeLinearly(object)
+       %This function linearly optimizes the values of the subarrays based off of the output of a powermeter. It begins the optimization at the top left corner of the window, then proceeds column by column. When it reaches the last column, if there is another line, the algorithm goes to the first column of that line, if not, the optimization is done.
+       %@object : the regroupement for which optimization is sought.
        
-       function getPowerMeterValue(object)
-           
+           %(Declaration and definition) of variables
+           currentValue = 0;    %The current value of the array being optimized.
+           exit = 0;    %Exits the while loop when true.
+           previousBestPowermeterValue = SLMRegroupement.getPowerMeterValue;%The highest powermeter value achieved.
+           %Module
+           for i = 1:object.groupsM
+               for j = 1:object.groupsN
+                   while(currentValue <= SLMPixel.getMaximumGrayscale() )
+                       %Display the current value
+                       object.displayResult(i, j, currentValue);
+                       %Pause and check to see if the powermeter value is better.
+                       pause(SLMRegroupement.PAUSE_BETWEEN_OPTIMIZAITON_VALUES);
+                       display(['The current value is ', num2str(currentValue), ' for m = ', num2str(i), ' and n = ', num2str(j), '.'] );
+                       newPowermeterValue = SLMRegroupement.getPowerMeterValue;
+                       if (newPowermeterValue > previousBestPowermeterValue)
+                          bestValue = currentValue; 
+                          previousBestPowermeterValue = newPowermeterValue;
+                       end
+                       %Set the new current Value of the group and exit
+                       %loop if the current value is the maximum possible.
+                       currentValue = currentValue + SLMRegroupement.LINEAR_OPTIMIZATION_RATE;
+                       if (currentValue > SLMPixel.getMaximumGrayscale() && ~exit)
+                           exit = 1;
+                           currentValue = SLMPixel.getMaximumGrayscale();
+                       end
+                   end
+                   object.displayResult(i, j, bestValue);
+                   currentValue = 0;
+                   bestValue = 0;
+                   exit = 0;
+                   previousBestPowermeterValue = SLMRegroupement.getPowerMeterValue;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%REMOVE ME. RUINS EXPERIMENT.
+               end
+           end
        end
-           
-       function result
+       
+       function optimizeRandomly(object, variationRate, numberOfGroupsToRandomize, waitingIterations)
+          %The function randomly optimizes a certain number of groups on each loop iteration and increments their values based on a given varaiation rate, modulo the maxium pixel value. 
+          %     @object : the regroupement that will be optimized.
+          %     @variationRate : the rate at which the values in the group
+          %     will change (modulo of this value with the maximum pixel value
+          %     added with the current value of the randomly selected pixel)
+          %     @numberOfGroupsToRandomize : the number of groups that will
+          %     be randomized at every loop iteration.
+          %     @waitingIterations: the maximum (inclusive) number of iterations that the
+          %     program will wait for a better regroupement to be
+          %     generated.
+          
+          %(Declaration and definition) of variables
+          numberOfIterations = 0;
+          previousValues = zeros(numberOfIterations, 3);
+          bestPowerMeterValue = 0;
+          %Module
+          while (numberOfIterations <= waitingIterations)
+              previousState = object.currentState; %State of regroupement before randomization.
+              for i = 1:numberOfGroupsToRandomize
+                  randomM = randi(object.groupsM);
+                  randomN = randi(object.groupsN);%%%%%%%Does this generate 1.
+                  %Array to which the random generation will be applied.
+                  currentArray = object.getArray(randomM, randomN);
+                  previousValues(i,1) =  currentArray.getValue(1,1,1); %There should always be atleast one groups and pixel.
+                  previousValues(i,2) = randomM;
+                  previousValues(i,3) = randomN;
+                  newValue = mod(previousValues(i)+variationRate, SLMPixel.getMaximumGrayscale); 
+                  object.getArray(randomM, randomN).makeGray(newValue, 1);
+                  object.numericize(randomM, randomN);
+              end
+              object.show();
+              pause(SLMRegroupement.PAUSE_BETWEEN_OPTIMIZAITON_VALUES);
+              currentPowerMeterValue = SLMRegroupement.getPowerMeterValue();
+              if (currentPowerMeterValue > bestPowerMeterValue)
+                  bestPowerMeterValue = currentPowerMeterValue;
+              else %Undo previous sets and redisplay the previous values.
+                  for i = 1:numberOfGroupsToRandomize
+                       %Array to which the random generation will be applied.
+                       currentArray = object.getArray(previousValues(i,2), previousValues(i,3));
+                       currentArray.makeGray(previousValues(i,3), 1);
+                  end
+                  object.currentState = previousState;
+                  object.show();
+              end
+          end
+       end
    end
    methods (Access = private)
+       function displayResult(m, n, value)
+           %Sets a value to one of the arrays in the regroupement.
+           %    @m : the row in which the array is found.
+           %    @n : the column in which the array is found.
+           %    @value : the value that is set to the array.
+           
+               object.getArray(m, n).makeGray(value, 1);
+               object.numericize(m, n);
+               object.show();
+        end
+       
        function result = getArray(object, positionM, positionN)
            %Get the value of a pixel array in a regroupement.
            %    @positionM: the array's line in the regroupement.
@@ -214,17 +318,6 @@ classdef SLMRegroupement < handle
        
        function requestInformation(command, varargin)
            %%%FUNCTION REQUEST'S INPUT FROM USER.
-       end
-       
-       function makeGrating(object, gratingNumber, varargin)
-           %Creates a grating on the
-           
-           %Module
-           if(length(varargin) == 2)
-               object.getArray(m, n).makeGrating(gratingNumber, varargin{1}, varargin{2});
-           elseif(length(varargin) == 3)
-               object.getArray(m, n).makeGrating(gratingNumber, varargin{1}, varargin{2}, varargin{3});
-           end
        end
        
        function result = isWhole(~,varargin)
@@ -301,5 +394,14 @@ classdef SLMRegroupement < handle
            end
            result = value;
        end
+       
+      function result = getPowerMeterValue(~)
+          %Gets the current value of the powermeter.
+          %     @~: means that no inputs will be accepted.
+          
+          %Module
+          %Gets the current power meter's value from labview.
+          result = rand();
+      end
    end
 end

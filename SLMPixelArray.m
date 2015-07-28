@@ -141,14 +141,14 @@ classdef SLMPixelArray < handle
            end
        end
        
-       function makeGray(object, info)
+       function makeGray(object, varargin)
           %Sets the gray value to a particular value.
           %     @object : the pixel array in which the group array that will be set to a particular value is found.
           %     @info : the first value in the array is the group that will
           %     be sets' location in the group pixel array and the second
           %     is the grayscale value that the group will be set to.
-          if (length(info) == 2)
-                object.getGroup(cell2mat(info(2))).setTo(cell2mat(info(1)));
+          if (length(varargin) == 2)
+                object.getGroup(varargin{2}).setTo(varargin{1});
           end
        end
        
@@ -190,7 +190,7 @@ classdef SLMPixelArray < handle
            result = size(2);               
        end
        
-      function result = getWidth(object)
+       function result = getWidth(object)
            %Gives the width of the current groups in the array.
            %    @object : the current array in which the groups are found
           
@@ -200,6 +200,18 @@ classdef SLMPixelArray < handle
            result = size(1);               
       end
        %Methods to assist during testing:
+       
+       function result = getValue(object, groupNumber, pixelM, pixelN)
+           %Returns the value of a pixel in the group.
+           %    object : the current array in which there is group in which there is a pixel for which the value is sought..
+           %    groupNumber : the number of the group in which the value of
+           %    the sought pixel is found.
+           %    pixelM : the row of the pixel.
+           %    pixelN : the column of the pixel.
+           %    result : the value of the pixel in the group
+           
+           result = object.getGroup(groupNumber).getPixelGrayscale(pixelM, pixelN);
+       end
        
        function testSubgroups(object)
        %%%%%%%%%%%%%%%%% FOR TESTING PURPOSES ONLY %%%%%%%%%%%%%%%%%%%%%%%%%
