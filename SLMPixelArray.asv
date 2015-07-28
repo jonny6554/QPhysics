@@ -181,24 +181,10 @@ classdef SLMPixelArray < handle
        end
        
        function result = getLength(object)
-           %Gives the length of the current groups in the array.
-           %    @object : the current array in which the groups are found
-           
-           %(Declaration and definition) of variables.
-           size = object.getGroup(1).getSize();
-           %Module
-           result = size(2);               
-       end
-       
-      function result = getWidth(object)
-           %Gives the width of the current groups in the array.
-           %    @object : the current array in which the groups are found
-          
-           %(Declaration and definition) of variables.
            size = object.getGroup(1).getSize();
            %Module
            result = size(1);               
-      end
+       end
        %Methods to assist during testing:
        
        function testSubgroups(object)

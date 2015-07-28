@@ -57,6 +57,7 @@ classdef SLMRegroupement < handle
                        end
                        divisionM = divisionM - remainderM*(i == groupsM);
                    end
+                   object.currentState = zeros(width, length); %Since values are initialized at zero.
                elseif ~(object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length))
                    errorNotice.message = ['The following should all be of a numerical type and whole numbers : number of line groups = ', num2str(groupsM), ' (', class(groupsM),'), number of column groups = ', num2str(groupsN), ' (', class(groupsN),'), number of pixel lines = ', num2str(lines), ' (', class(lines),') and the number of pixel columns = ', num2str(columns), ' (', class(columns),').'];
                    errorNotice.identifier= 'SLMRegroupement:BadInputArgumentTypes';
@@ -94,41 +95,49 @@ classdef SLMRegroupement < handle
                switch(num2str(command))
                    case object.X_GRATING_NAMES
                        object.getArray(m, n).makeGrating(1, varargin);
+                       object.numericize(m,n);
                    case object.Y_GRATING_NAMES
                        object.getArray(m, n).makeGrating(0, varargin);
+                       object.numericize(m,n);
                    case object.COLOUR_NAMES
                        if(length(varargin) == 2)
                             object.getArray(m, n).makeGray(varargin);
+                            object.numericize(m,n);
                        end
+                       
                end
            
        end
        
-       function result = numericize(object)
+       function numericize(object, m, n)
            %Returns an array that represents the current state of the
            %objects in the regroupement.
            %    @object : the regroupement for which a numerical
            %    representation is sought.
            
            %(Declaration and definition) of variables.
+           distanceM = 0;
+           distanceN = 0;
            %Module.
-           result = zeros(object.pixWidth, object.pixLength);
-           previousM = 0;
-           previousN = 0;
-           for i = 1:object.groupsM
-               for j = 1:object.groupsN
-                   currentObject = object.getArray(i,j);
-                   arrayToBeTreated = currentObject.numericize();
-                   currentSize = size(arrayToBeTreated);
-                   for k = 1:currentSize(1)
-                       for l = 1:currentSize(2)
-                           result((previousM)*(i-1) + k, (previousN)*(j-1) + l) = arrayToBeTreated(k,l);
-                       end
-                   end
-                   previousN = previousN + currentSize(2);
+           currentObject = object.getArray(m,n); %Throws errors.
+           arrayToBeTreated = currentObject.numericize();
+           currentSize = size(arrayToBeTreated);
+           if (m ~= 1)
+               for i=1:m
+                   currentObject = object.getArray(i,1);
+                   distanceM = distanceM + currentObject.getWidth();
                end
-               previousN = 0;
-               previousM = previousM + currentSize(1);
+           end
+           if (n ~= 1)
+               for i = 1:n
+                   currentObject = object.getArray(1,i);
+                   distanceN = distanceN + currentObject.getLength();
+               end
+           end
+           for k = 1:currentSize(1)
+               for l = 1:currentSize(2)
+                   object.currentState(distanceM+k, distanceN+l) = arrayToBeTreated(k,l);
+               end
            end
        end
        
@@ -140,10 +149,11 @@ classdef SLMRegroupement < handle
            
            %(Declaration and definition) of variables.
            %Module.
-           val = object.numericize();
+           val = object.currentState();
            imagesc(val);
- %          image(object.numericize());pause(.001)
+ %         image(object.numericize());pause(.001)
            colormap(gray(255));
+           set(gca, 'CLim', [0, 1]); %Makes the colormap limits minimum 0 and the maximum 1. (otherwise -1 and 1)
            axis off;
            set(gca,'units','pixels','position',[0 0 object.pixWidth object.pixLength]); %Bottom left corner is 0,0
    %      axis off
@@ -159,12 +169,11 @@ classdef SLMRegroupement < handle
            result = object.pixWidth;
        end
        
-       function update(object)
-          if (~isempty)
-          else
-              
-          end
+       function getPowerMeterValue(object)
+           rand
        end
+           
+       function result
    end
    methods (Access = private)
        function result = getArray(object, positionM, positionN)
@@ -246,6 +255,34 @@ classdef SLMRegroupement < handle
             else 
                 result =0;
             end
+       end
+       
+      function result = numericizeRegroupement(object)
+           %Returns an array that represents the current state of the
+           %objects in the regroupement.
+           %    @object : the regroupement for which a numerical
+           %    representation is sought.
+           
+           %(Declaration and definition) of variables.
+           %Module.
+           result = zeros(object.pixWidth, object.pixLength);
+           previousM = 0;
+           previousN = 0;
+           for i = 1:object.groupsM
+               for j = 1:object.groupsN
+                   currentObject = object.getArray(i,j);
+                   arrayToBeTreated = currentObject.numericize();
+                   currentSize = size(arrayToBeTreated);
+                   for k = 1:currentSize(1)
+                       for l = 1:currentSize(2)
+                           result((previousM)*(i-1) + k, (previousN)*(j-1) + l) = arrayToBeTreated(k,l);
+                       end
+                   end
+                   previousN = previousN + currentSize(2);
+               end
+               previousN = 0;
+               previousM = previousM + currentSize(1);
+           end
        end
    end
    methods (Access = private, Static)

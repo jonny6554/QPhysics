@@ -20,7 +20,7 @@ classdef SLMPixelGroup < handle
         overlayPercent; %Indicates the amount that the group is overlayed with the others.
     end
     properties (Constant, Access = private)
-       DEFAULT_INITIAL_PIXEL_VALUE = 255; 
+       DEFAULT_INITIAL_PIXEL_VALUE = 0; 
     end
     methods 
         function object = SLMPixelGroup(m, n, overlayPercent, varargin)
