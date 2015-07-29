@@ -66,8 +66,7 @@ classdef SLMFigure < handle
             %Creating the figure
             object.window = figure(object.windowNumber);
             set(object.window,'menubar','none','units','pixels');
-                set(object.window,'Position',[initialCoordinates, object.xlength-1, object.ylength-1]); %Figure appears at initial coordinates
-
+            set(object.window,'Position',[initialCoordinates, object.ylength-1,  object.xlength-1]); %Figure appears at initial coordinates
             set(object.window,'Resize','off'); % Disable resizing 
             set(object.window,'BackingStore','off'); %For fast drawing of the figure's contents
             if (~isempty(varargin))
