@@ -43,7 +43,7 @@ classdef SLMFigure < handle
             object.x = initialCoordinates(1);
             object.y = initialCoordinates(2);
             %Creating the figure
-            object.refresh();
+            object.refresh(regroupement);
         end
                 
         function close(object)

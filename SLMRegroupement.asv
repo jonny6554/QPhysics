@@ -215,7 +215,6 @@ classdef SLMRegroupement < handle
                    currentValue = 0;
                    bestValue = 0;
                    exit = 0;
-                   previousBestPowermeterValue = SLMRegroupement.getPowerMeterValue;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%REMOVE ME. RUINS EXPERIMENT.
                end
            end
        end
@@ -232,39 +231,47 @@ classdef SLMRegroupement < handle
           %     program will wait for a better regroupement to be
           %     generated.
           
-          %(Declaration and definition) of variables
-          numberOfIterations = 0;
-          previousValues = zeros(numberOfIterations, 3);
-          bestPowerMeterValue = 0;
-          %Module
-          while (numberOfIterations <= waitingIterations)
-              previousState = object.currentState; %State of regroupement before randomization.
-              for i = 1:numberOfGroupsToRandomize
-                  randomM = randi(object.groupsM);
-                  randomN = randi(object.groupsN);%%%%%%%Does this generate 1.
-                  %Array to which the random generation will be applied.
-                  currentArray = object.getArray(randomM, randomN);
-                  previousValues(i,1) =  currentArray.getValue(1,1,1); %There should always be atleast one groups and pixel.
-                  previousValues(i,2) = randomM;
-                  previousValues(i,3) = randomN;
-                  newValue = mod(previousValues(i)+variationRate, SLMPixel.getMaximumGrayscale); 
-                  object.getArray(randomM, randomN).makeGray(newValue, 1);
-                  object.numericize(randomM, randomN);
-              end
-              object.show();
-              pause(SLMRegroupement.PAUSE_BETWEEN_OPTIMIZAITON_VALUES);
-              currentPowerMeterValue = SLMRegroupement.getPowerMeterValue();
-              if (currentPowerMeterValue > bestPowerMeterValue)
-                  bestPowerMeterValue = currentPowerMeterValue;
-              else %Undo previous sets and redisplay the previous values.
+          if(object.isNumeric(variationRate, numberOfGroupsToRandomize, waitingIterations) && object.isWhole(variationRate, numberOfGroupsToRandomize, waitingIterations) && variationRate > 0 && numberOfGroupsToRandomize > 0&& waitingIterations >= 0)
+              %(Declaration and definition) of variables
+              numberOfIterations = 0;
+              previousValues = zeros(numberOfIterations, 3);
+              bestPowerMeterValue = 0;
+              %Module
+              while (numberOfIterations <= waitingIterations)
+                  previousState = object.currentState; %State of regroupement before randomization.
                   for i = 1:numberOfGroupsToRandomize
-                       %Array to which the random generation will be applied.
-                       currentArray = object.getArray(previousValues(i,2), previousValues(i,3));
-                       currentArray.makeGray(previousValues(i,3), 1);
+                      randomM = randi(object.groupsM);
+                      randomN = randi(object.groupsN);%%%%%%%Does this generate 1.
+                      %Array to which the random generation will be applied.
+                      currentArray = object.getArray(randomM, randomN);
+                      %Save previous values.
+                      previousValues(i,1) =  currentArray.getValue(1,1,1); %There should always be atleast one groups and pixel.
+                      previousValues(i,2) = randomM;
+                      previousValues(i,3) = randomN;
+                      %Generate new value and set.
+                      newValue = mod(previousValues(i)+variationRate, SLMPixel.getMaximumGrayscale); 
+                      object.getArray(randomM, randomN).makeGray(newValue, 1);
+                      object.numericize(randomM, randomN);
                   end
-                  object.currentState = previousState;
                   object.show();
+                  pause(SLMRegroupement.PAUSE_BETWEEN_OPTIMIZAITON_VALUES);
+                  currentPowerMeterValue = SLMRegroupement.getPowerMeterValue();
+                  if (currentPowerMeterValue > bestPowerMeterValue)
+                      bestPowerMeterValue = currentPowerMeterValue;
+                  else %Undo previous sets and redisplay the previous values.
+                      for i = 1:numberOfGroupsToRandomize
+                           %Array to which the random generation will be applied.
+                           currentArray = object.getArray(previousValues(i,2), previousValues(i,3));
+                           currentArray.makeGray(previousValues(i,3), 1);
+                      end
+                      object.currentState = previousState;
+                      object.show();
+                  end
               end
+          else
+              errorNotice.message = ['All of the following parameters must be a double, positive (or zero in the case of the last one) and whole numbers, but atleast one of these conditions was not forfilled: ', class ];
+              errorNotice.identifier= 'SLMRegroupement:InvalidOptimizationParameters';
+              error(errorNotice);
           end
        end
    end
