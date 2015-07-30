@@ -234,33 +234,29 @@ classdef SLMPixelArray < TypeVerifiable
 %                 @result: the combined array of the values of the
 %                 subgroups. Each subgroups contribution is indicated by the
 %                 groups overlay percent.
-          %(Declaration and dictionaray) of vairables.
+  %(Declaration and dictionaray) of vairables.
           size = object.groupArray(1).getSize(); %The size of the arrays.
           result = SLMPixelGroup(size(1), size(2), 1, 0); %The combined group.
           totalOverlayPercent = 0; %Algorithm will not add any of the groups that come after this value reaches 1.
           %Module
-          if (length(groupArray) ~= 1)
-              for i=1:length(object.groupArray)
-                  currentObject = object.groupArray(i);
-                  totalOverlayPercent = totalOverlayPercent + currentObject.getOverlayPercent();
-                  if (totalOverlayPercent > 1)
-                     difference = totalOverlayPercent-1;
-                     currentOverlayPercent = currentObject.getOverlayPercent()-difference;
-                  else
-                     currentOverlayPercent = currentObject.getOverlayPercent();
-                  end
-                  for m = 1:size(1) 
-                      for n = 1:size(2)
-                          newValue = result.getPixelGrayscale(m,n) + currentOverlayPercent*currentObject.getPixelGrayscale(m,n);
-                          result.setPixelGrayscale(m, n, newValue); 
-                      end
-                  end
-                  if (totalOverlayPercent >= 1)
-                     break; 
+          for i=1:length(object.groupArray)
+              currentObject = object.groupArray(i);
+              totalOverlayPercent = totalOverlayPercent + currentObject.getOverlayPercent();
+              if (totalOverlayPercent > 1)
+                 difference = totalOverlayPercent-1;
+                 currentOverlayPercent = currentObject.getOverlayPercent()-difference;
+              else
+                 currentOverlayPercent = currentObject.getOverlayPercent();
+              end
+              for m = 1:size(1) 
+                  for n = 1:size(2)
+                      newValue = result.getPixelGrayscale(m,n) + currentOverlayPercent*currentObject.getPixelGrayscale(m,n);
+                      result.setTo(m, n, newValue); 
                   end
               end
-          else
-              result = object.groupArray(1);
+              if (totalOverlayPercent >= 1)
+                 break; 
+              end
           end
         end
         

@@ -1,17 +1,14 @@
-%{
-    This class contains the regroupement of all the SLMPixelArrays. It
-    contains a 2D array of SLMPixelArrays. The class manages the arrays and
-    contains a function that allows for the figure display to be refreshed.
-    This class can :
-        -Construct the subarrays and the class.
-        -Select an array or multiple arrays.
-        -Save the current state of the figure.
-        -Regroup the subarrays.
-        -Display the values in the group on the SLMFigure.
-        -Create a gradient.
-%}
-
-classdef SLMRegroupement < handle
+classdef SLMRegroupement < TypeVerifiable
+%    This class contains the regroupement of all the SLMPixelArrays. It
+%    contains a 2D array of SLMPixelArrays. The class manages the arrays and
+%    contains a function that allows for the figure display to be refreshed.
+%    This class can :
+%        -Construct the subarrays and the class.
+%        -Select an array or multiple arrays.
+%        -Save the current state of the figure.
+%        -Regroup the subarrays.
+%        -Display the values in the group on the SLMFigure.
+%        -Create a gradient.
    properties (SetAccess = private)
        regroupement; %Contains the regroupement of the SLMPixelArrays.
        groupsM; %Indicates the number of lines.
@@ -37,7 +34,7 @@ classdef SLMRegroupement < handle
            %(groupsN)
            
            %Module
-           if (object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length) && groupsM < width && groupsN < length)
+           if (SLMRegroupement.isNumeric(groupsM, groupsN, length, width) && SLMRegroupement.isWhole(groupsM, groupsN, width, length) && groupsM < width && groupsN < length)
                %Set values of the class.
                object.regroupement = SLMPixelArray;
                object.regroupement(groupsM, groupsN) = SLMPixelArray;
@@ -62,7 +59,7 @@ classdef SLMRegroupement < handle
                        divisionM = divisionM - remainderM*(i == groupsM);
                    end
                    object.currentState = zeros(width, length); %Since values are initialized at zero.
-               elseif ~(object.isNumeric(groupsM, groupsN, length, width) && object.isWhole(groupsM, groupsN, width, length))
+               elseif ~(SLMRegroupement.isNumeric(groupsM, groupsN, length, width) && SLMRegroupement.isWhole(groupsM, groupsN, width, length))
                    errorNotice.message = ['The following should all be of a numerical type and whole numbers : number of line groups = ', num2str(groupsM), ' (', class(groupsM),'), number of column groups = ', num2str(groupsN), ' (', class(groupsN),'), number of pixel lines = ', num2str(lines), ' (', class(lines),') and the number of pixel columns = ', num2str(columns), ' (', class(columns),').'];
                    errorNotice.identifier= 'SLMRegroupement:BadInputArgumentTypes';
                    error(errorNotice);
@@ -231,7 +228,7 @@ classdef SLMRegroupement < handle
           %     program will wait for a better regroupement to be
           %     generated.
           
-          if(object.isNumeric(variationRate, numberOfGroupsToRandomize, waitingIterations) && object.isWhole(variationRate, numberOfGroupsToRandomize, waitingIterations) && variationRate > 0 && numberOfGroupsToRandomize > 0&& waitingIterations >= 0)
+          if(SLMRegroupement.isNumeric(variationRate, numberOfGroupsToRandomize, waitingIterations) && SLMRegroupement.isWhole(variationRate, numberOfGroupsToRandomize, waitingIterations) && variationRate > 0 && numberOfGroupsToRandomize > 0&& waitingIterations >= 0)
               %(Declaration and definition) of variables
               numberOfIterations = 0;
               previousValues = zeros(numberOfIterations, 3);
@@ -293,9 +290,9 @@ classdef SLMRegroupement < handle
            %    @positionN: the array's column in the regroupement.
            %    @result: the array that was sought.
            
-           if (object.isNumeric(positionM, positionN) && object.isWhole(positionM, positionN) && positionM > 0 && positionM <= object.groupsM && positionN > 0 && positionN <= object.groupsN)
+           if (SLMRegroupement.isNumeric(positionM, positionN) && SLMRegroupement.isWhole(positionM, positionN) && positionM > 0 && positionM <= object.groupsM && positionN > 0 && positionN <= object.groupsN)
                result = object.regroupement(positionM, positionN);
-           elseif ~(object.isNumeric(positionM) && object.isWhole(positionM) && positionM > 0 && positionM <= object.groupsM)
+           elseif ~(SLMRegroupement.isNumeric(positionM) && SLMRegroupement.isWhole(positionM) && positionM > 0 && positionM <= object.groupsM)
                errorNotice.message = ['The number of lines in the pixel regroupment was either not a double and it was a ', class(positionM), ' or it is out of bounds (0 < m = ', num2str(positionM),' < ' num2str(object.groupsM), ')'];
                errorNotice.identifier= 'SLMRegroupement:NoSuchLine';
                error(errorNotice);          
@@ -325,36 +322,6 @@ classdef SLMRegroupement < handle
        
        function requestInformation(command, varargin)
            %%%FUNCTION REQUEST'S INPUT FROM USER.
-       end
-       
-       function result = isWhole(~,varargin)
-%           Verifies that the property is a whole number.
-%                 @~, ignores the SLMPixelGroup object since it is unused.
-%                 @varargin: Indicates a variable number of arguments.
-%                     (e.g. varargin{1} is the first argument)
-            result = 1;
-            if ~isempty(varargin)
-                for i = 1:length(varargin)
-                   result = result && ~mod(varargin{i},1);
-                end
-            else
-                result =0;
-            end
-       end
-        
-       function result = isNumeric(~, varargin)
-            %             Indicates whether or not the input(s) is of a numerical type.
-            %                 @~ignore the input of the object calling the function.
-            %                 @varargin : the array of arguments entered.
-            result = 1;
-            %Module
-            if ~isempty(varargin)
-                for i = 1:length(varargin)
-                    result = result && isnumeric(varargin{i});
-                end
-            else 
-                result =0;
-            end
        end
        
       function result = numericizeRegroupement(object)

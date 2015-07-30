@@ -1,11 +1,12 @@
-classdef SLMPixel < TypeVerifiable
+classdef SLMPixel < typeVerifiable
 %    This class represents a pixel. The possible values are between 0 and 255. 
 %    It contains methods for constructing the pixel, setting the value, gettting the value.
 %
 %    SLMPixel is a subclass of handle: if you copy its handle, it will not
 %    copy the object but rather just a reference towards that object.
     properties (SetAccess = private)
-       grayscale; %The value between the minimum and maximum. 
+       grayscale; %The value between 0 and 255. 
+       selected; %Indicates whether or whether not the pixel is selected.
     end
     properties (Constant, Access = private)
         GRAY_MAX = 255; %Maximum value of a pixel (inclusive).
@@ -19,7 +20,7 @@ classdef SLMPixel < TypeVerifiable
             %        @object : The pixel that has just been constructed.
             %
             if (nargin > 0) %Only runs when there is atleast one argument (i.e. grayscale is given a value.).
-                if (SLMPixel.isNumeric(grayscale) && SLMPixel.isWhole(grayscale) && SLMPixel.validatePixelValue(grayscale))
+                if (SLMPixel.isNumeric(grayscale) && SLMPixel.isWhole(grayscale) && object.validatePixelValue(grayscale))
                     object.grayscale = grayscale;
                 elseif (~SLMPixel.isNumeric(grayscale))
                     errorNotice.message = ['Error: cannot create pixel. Grayscale should be a double and is ', class(grayscale), '!'];
@@ -30,6 +31,7 @@ classdef SLMPixel < TypeVerifiable
                     errorNotice.identifier = 'SLMPixel:InvalidGrayscaleConstructionValue';
                     error(errorNotice);
                 end
+                object.selected = 0;
             end
         end
         
@@ -37,7 +39,7 @@ classdef SLMPixel < TypeVerifiable
             %    Sets the value of the pixel.
             %        @object : the SLMPixel object.
             %        @value : the new value of the pixel.
-           if (SLMPixel.isNumeric(value) && SLMPixel.isWhole(value) && SLMPixel.validatePixelValue(value))
+           if (SLMPixel.isNumeric(value) && SLMPixel.isWhole(value) && object.validatePixelValue(value))
                object.grayscale = value;
            elseif ~(SLMPixel.isNumeric(value))
                 errorNotice.message = ['Error: cannot set value to pixel. Grayscale should be a double and is ', class(value), '!'];
@@ -56,6 +58,19 @@ classdef SLMPixel < TypeVerifiable
             %        @result : the value of the pixel.
             result = object.grayscale;  
         end
+        
+        function toggleSelection(object)
+             %    Changes the pixel to selected or deselected or vice versa. (Complements value)
+             %        @object : the SLMPixel object.
+            object.selected = ~object.selected;
+        end
+        
+        function result = getSelected(object)
+            %    Gets the value of selected.
+            %        @object : the SLMPixel object.
+            %        @result : 1 if it is selected.
+            result = object.selected;
+        end
     end 
     methods (Static) 
         function result = getMaximumGrayscale()
@@ -68,13 +83,13 @@ classdef SLMPixel < TypeVerifiable
             result = SLMPixel.GRAY_MIN;
         end
     end
-    methods (Access = private, Static)       
-        function result = validatePixelValue(grayscaleValue)
+    methods (Access = private)       
+        function result = validatePixelValue(object, grayscaleValue)
            %    Verifies that thet pixel value is between the given numbers.
            %        @object : the current SLMPixel object.
            %        @grayscaleValue : the grayScale value to be verified.
            %        @result : either a 1 or zero. 1 means that number is scalar.
-           result = grayscaleValue >= SLMPixel.GRAY_MIN && grayscaleValue <= SLMPixel.GRAY_MAX;
+           result = grayscaleValue >= object.GRAY_MIN && grayscaleValue <= object.GRAY_MAX;
         end
     end    
 end
