@@ -335,19 +335,4 @@ classdef SLMPixelGroup < TypeVerifiable
             end
         end
     end
-    methods(Static)
-        function result = addGroups(object, object2)
-        %Adds two SLMPixelGroups together.
-        %   @object: An SLMPixelGroup that will be added with object2.
-        %   @object2: An SLMPixelgroup that will be added with object1.
-           
-            
-            
-           %Module
-           if (isa(object, 'SLMPixelGroup') && isa(object2, 'SLMPixelGroup') && object.columns == object2.columns && object.lines == object2.lines)
-              
-               
-           end
-        end
-    end
 end

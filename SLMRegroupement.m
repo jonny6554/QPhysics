@@ -273,7 +273,7 @@ classdef SLMRegroupement < TypeVerifiable
        end
    end
    methods (Access = private)
-       function displayResult(m, n, value)
+       function displayResult(object, m, n, value)
            %Sets a value to one of the arrays in the regroupement.
            %    @m : the row in which the array is found.
            %    @n : the column in which the array is found.

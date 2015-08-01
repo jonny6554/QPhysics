@@ -239,7 +239,7 @@ classdef SLMPixelArray < TypeVerifiable
           result = SLMPixelGroup(size(1), size(2), 1, 0); %The combined group.
           totalOverlayPercent = 0; %Algorithm will not add any of the groups that come after this value reaches 1.
           %Module
-          if (length(groupArray) ~= 1)
+          if (length(object.groupArray) ~= 1)
               for i=1:length(object.groupArray)
                   currentObject = object.groupArray(i);
                   totalOverlayPercent = totalOverlayPercent + currentObject.getOverlayPercent();
