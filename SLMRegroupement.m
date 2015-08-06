@@ -185,7 +185,10 @@ classdef SLMRegroupement < TypeVerifiable
            %(Declaration and definition) of variables
            currentValue = 0;    %The current value of the array being optimized.
            exit = 0;    %Exits the while loop when true.
-           previousBestPowermeterValue = SLMRegroupement.getPowerMeterValue;%The highest powermeter value achieved.
+           powerMeter = PowerMeter('test.txt'); %The current value displayer on the powermeter
+           previousBestPowermeterValue = powerMeter.getCurrentValue();%The highest powermeter value achieved.
+           bestValue = 0;
+           index = 1;
            %Module
            for i = 1:object.groupsM
                for j = 1:object.groupsN
@@ -193,9 +196,10 @@ classdef SLMRegroupement < TypeVerifiable
                        %Display the current value
                        object.displayResult(i, j, currentValue);
                        %Pause and check to see if the powermeter value is better.
-                       pause(SLMRegroupement.PAUSE_BETWEEN_OPTIMIZAITON_VALUES);
-                       display(['The current value is ', num2str(currentValue), ' for m = ', num2str(i), ' and n = ', num2str(j), '.'] );
-                       newPowermeterValue = SLMRegroupement.getPowerMeterValue;
+                       newPowermeterValue = powerMeter.getCurrentValue();
+                       object.values(index) = newPowermeterValue;
+                       index = index +1;
+                       display(['The current value is ', num2str(currentValue), ' for m = ', num2str(i), ' and n = ', num2str(j), ' with power = ', num2str(newPowermeterValue),' < max = ' num2str(previousBestPowermeterValue), '.'] );
                        if (newPowermeterValue > previousBestPowermeterValue)
                           bestValue = currentValue; 
                           previousBestPowermeterValue = newPowermeterValue;
@@ -227,12 +231,16 @@ classdef SLMRegroupement < TypeVerifiable
           %     @waitingIterations: the maximum (inclusive) number of iterations that the
           %     program will wait for a better regroupement to be
           %     generated.
-          
-          if(SLMRegroupement.isNumeric(variationRate, numberOfGroupsToRandomize, waitingIterations) && SLMRegroupement.isWhole(variationRate, numberOfGroupsToRandomize, waitingIterations) && variationRate > 0 && numberOfGroupsToRandomize > 0&& waitingIterations >= 0)
+           
+          %(Declaration and definition of variables)
+          index = 1; %The index of the values in the regroupement.
+          %Module
+          if(object.isNumeric(variationRate, numberOfGroupsToRandomize, waitingIterations) && object.isWhole(variationRate, numberOfGroupsToRandomize, waitingIterations) && variationRate > 0 && numberOfGroupsToRandomize > 0&& waitingIterations >= 0)
               %(Declaration and definition) of variables
               numberOfIterations = 0;
               previousValues = zeros(numberOfIterations, 3);
               bestPowerMeterValue = 0;
+              powerMeter = PowerMeter('test.txt');
               %Module
               while (numberOfIterations <= waitingIterations)
                   previousState = object.currentState; %State of regroupement before randomization.
@@ -251,11 +259,14 @@ classdef SLMRegroupement < TypeVerifiable
                       object.numericize(randomM, randomN);
                   end
                   object.show();
-                  pause(SLMRegroupement.PAUSE_BETWEEN_OPTIMIZAITON_VALUES);
-                  currentPowerMeterValue = SLMRegroupement.getPowerMeterValue();
-                  if (currentPowerMeterValue > bestPowerMeterValue)
-                      bestPowerMeterValue = currentPowerMeterValue;
+                  newPowerMeterValue = powerMeter.getCurrentValue();
+                  object.values(index) = newPowerMeterValue;
+                  index = index +1;
+                  if (newPowerMeterValue > bestPowerMeterValue)
+                      display(['Improvement on trial ', num2str(numberOfIterations), ' power = ', num2str(newPowerMeterValue),' < max = ' num2str(bestPowerMeterValue), '.'] );
+                      bestPowerMeterValue = newPowerMeterValue;
                   else %Undo previous sets and redisplay the previous values.
+                      display(['No improvement on trial ', num2str(numberOfIterations), ' power = ', num2str(newPowerMeterValue),' < max = ' num2str(bestPowerMeterValue), '.'] );
                       for i = 1:numberOfGroupsToRandomize
                            %Array to which the random generation will be applied.
                            currentArray = object.getArray(previousValues(i,2), previousValues(i,3));
@@ -264,6 +275,7 @@ classdef SLMRegroupement < TypeVerifiable
                       object.currentState = previousState;
                       object.show();
                   end
+                  numberOfIterations = numberOfIterations + 1;
               end
           else
               errorNotice.message = ['All of the following parameters must be a double, positive (or zero in the case of the last one) and whole numbers, but atleast one of these conditions was not forfilled: variation rate: ', num2str(variationRate),' (' , class(variationRate), ') number of groups to randomize: ',num2str(numberOfGroupsToRandomize),' (', class(numberOfGroupsToRandomize),') and waiting iterations: ', num2str(waitingIterations), '(', class(waitingIterations),').' ];

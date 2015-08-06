@@ -205,7 +205,7 @@ classdef SLMPixelGroup < TypeVerifiable
         %Module
         for i = 1:object.lines;
             for j = 1:object.columns;
-                result(i,j) = object.pixelGroup(i,j).getGrayscale();
+                result(i,j) = grayscale(object.pixelGroup(i,j));
             end
         end
         end  
@@ -219,7 +219,7 @@ classdef SLMPixelGroup < TypeVerifiable
             %All of the error checking is done inside the SLMPixel class.
             for i = 1:object.lines;
                 for j = 1:object.columns;
-                    object.pixelGroup(i,j).setGrayscale(value);
+                    grayscale(object.pixelGroup(i,j), value);
                 end
             end
         end
@@ -283,7 +283,7 @@ classdef SLMPixelGroup < TypeVerifiable
             modifyVectorPosition(1,(flip)*object.columns + ~(flip)*object.lines);
             for i = 1:object.lines
                 for j = 1:object.columns
-                    object.pixelGroup(i,j).setGrayscale(round(vector(vectorPosition)));
+                    grayscale(object.pixelGroup(i,j), round(vector(vectorPosition)));
                     if (flip)
                         modifyVectorPosition(j,object.columns);
                     end
@@ -300,7 +300,7 @@ classdef SLMPixelGroup < TypeVerifiable
             %                 @positionM : the column in which the pixel is found.
             %                 @positionN : the line in which the pixel is found.
            %Module
-           %NOTE: error check on value is done inside the SLMPixel class' setGrayScale method.
+           %NOTE: error check on value is done inside the SLMPixel class' set.grayscale method.
            if (SLMPixelGroup.isNumeric(positionM, positionN) && SLMPixelGroup.isWhole(positionM, positionN) && positionM > 0 && positionM <= object.lines && positionN > 0 && positionN <= object.columns)
                result = object.pixelGroup(positionM, positionN);
            elseif ~(SLMPixelGroup.isNumeric(positionM) && SLMPixelGroup.isWhole(positionM) && positionM > 0 && positionM <= object.lines)

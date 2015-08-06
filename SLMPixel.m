@@ -5,7 +5,10 @@ classdef SLMPixel < TypeVerifiable
 %    SLMPixel is a subclass of handle: if you copy its handle, it will not
 %    copy the object but rather just a reference towards that object.
     properties (SetAccess = private)
-       grayscale; %The value between the minimum and maximum. 
+        grayscale_; %The value between the minimum and maximum. 
+    end
+    properties (Dependent)
+        grayscale %This value is used for getting and setting. It depends on it's equivalent private property.
     end
     properties (Constant, Access = private)
         GRAY_MAX = 255; %Maximum value of a pixel (inclusive).
@@ -20,7 +23,7 @@ classdef SLMPixel < TypeVerifiable
             %
             if (nargin > 0) %Only runs when there is atleast one argument (i.e. grayscale is given a value.).
                 if (SLMPixel.isNumeric(grayscale) && SLMPixel.isWhole(grayscale) && SLMPixel.validatePixelValue(grayscale))
-                    object.grayscale = grayscale;
+                    object.grayscale_ = grayscale;
                 elseif (~SLMPixel.isNumeric(grayscale))
                     errorNotice.message = ['Error: cannot create pixel. Grayscale should be a double and is ', class(grayscale), '!'];
                     errorNotice.identifier = 'SLMPixel:InvalidGrayscaleConstructionType';
@@ -33,12 +36,12 @@ classdef SLMPixel < TypeVerifiable
             end
         end
         
-        function setGrayscale (object, value)
+        function set.grayscale (object, value)
             %    Sets the value of the pixel.
             %        @object : the SLMPixel object.
             %        @value : the new value of the pixel.
            if (SLMPixel.isNumeric(value) && SLMPixel.isWhole(value) && SLMPixel.validatePixelValue(value))
-               object.grayscale = value;
+               object.grayscale_ = value;
            elseif ~(SLMPixel.isNumeric(value))
                 errorNotice.message = ['Error: cannot set value to pixel. Grayscale should be a double and is ', class(value), '!'];
                 errorNotice.identifier = 'SLMPixel:InvalidGrayscaleSetType';
@@ -50,11 +53,11 @@ classdef SLMPixel < TypeVerifiable
            end
         end
         
-        function result = getGrayscale(object)
+        function result = get.grayscale(object)
             %    Gets the value of the pixel.
             %        @object : the SLMPixel object.
             %        @result : the value of the pixel.
-            result = object.grayscale;  
+            result = object.grayscale_;  
         end
     end 
     methods (Static) 
