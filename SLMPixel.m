@@ -36,7 +36,7 @@ classdef SLMPixel < TypeVerifiable
             end
         end
         
-        function set.grayscale (object, value)
+        function set.grayscale(object, value)
             %    Sets the value of the pixel.
             %        @object : the SLMPixel object.
             %        @value : the new value of the pixel.
