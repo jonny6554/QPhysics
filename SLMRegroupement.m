@@ -15,13 +15,15 @@ classdef SLMRegroupement < TypeVerifiable
        groupsN; %Indicates the number of groups.
        pixWidth; %Indicates the width of the pixels.
        pixLength; %Indicates the length of the pixels.
-       currentState; %Matrix representing the current numerical values.
+       values; %History of the values over time when running optimization alogrithms.
+       figure; %The figure which is displayed on the SLM.
    end
    properties (Access = private, Constant)
        %For exectution of commands
        X_GRATING_NAMES = {'x','X','length'}; %Possible grating names. 
        Y_GRATING_NAMES = {'y','Y','width','height'}; %Possible grating names.
        COLOUR_NAMES = {'c', 'C', 'colour', 'Colour'}; %Possible colour names.
+       FIGURE_NUMBER = 3; %The default figure number.
        %For the execution of optimization algorithms.
        LINEAR_OPTIMIZATION_RATE = 10; %The number of pixels that the optimization algorithm jumps over per iteration.
        PAUSE_BETWEEN_OPTIMIZAITON_VALUES = 0.2; %The length of a pause between optimization values in seconds. 
@@ -36,12 +38,13 @@ classdef SLMRegroupement < TypeVerifiable
            %Module
            if (SLMRegroupement.isNumeric(groupsM, groupsN, length, width) && SLMRegroupement.isWhole(groupsM, groupsN, width, length) && groupsM < width && groupsN < length)
                %Set values of the class.
-               object.regroupement = SLMPixelArray;
-               object.regroupement(groupsM, groupsN) = SLMPixelArray;
+               object.regroupement = SLMPixel;
+               object.regroupement(groupsM, groupsN) = SLMPixel;
                object.groupsM = groupsM;
                object.groupsN = groupsN;
                object.pixWidth = width;
                object.pixLength = length;
+               object.figure = SLMFigure(object, 1); % 1 indicates to use constant values in SLMFigure.
                %Initialize the regroupement.
                if (groupsM <= length && groupsN <= width)
                    divisionM = fix(width/groupsM); %Division 1
@@ -53,12 +56,13 @@ classdef SLMRegroupement < TypeVerifiable
                       divisionM = divisionM + remainderM*(i == groupsM);
                        for j = 1:groupsN
                            divisionN = divisionN + remainderN*(j == groupsN);
-                           object.regroupement(i,j) = SLMPixelArray(1, divisionM, divisionN, i, j); 
+                           object.regroupement(i,j) = SLMPixel(0, (i-1)*divisionN, (j-1)*divisionM, divisionN, divisionM); 
                            divisionN = divisionN - remainderN*(j == groupsN);
+                           
+                           object.regroupement(i,j).show(i+j);
                        end
                        divisionM = divisionM - remainderM*(i == groupsM);
                    end
-                   object.currentState = zeros(width, length); %Since values are initialized at zero.
                elseif ~(SLMRegroupement.isNumeric(groupsM, groupsN, length, width) && SLMRegroupement.isWhole(groupsM, groupsN, width, length))
                    errorNotice.message = ['The following should all be of a numerical type and whole numbers : number of line groups = ', num2str(groupsM), ' (', class(groupsM),'), number of column groups = ', num2str(groupsN), ' (', class(groupsN),'), number of pixel lines = ', num2str(lines), ' (', class(lines),') and the number of pixel columns = ', num2str(columns), ' (', class(columns),').'];
                    errorNotice.identifier= 'SLMRegroupement:BadInputArgumentTypes';
@@ -110,38 +114,6 @@ classdef SLMRegroupement < TypeVerifiable
            
        end
        
-       function numericize(object, m, n)
-           %Returns an array that represents the current state of the
-           %objects in the regroupement.
-           %    @object : the regroupement for which a numerical
-           %    representation is sought.
-           
-           %(Declaration and definition) of variables.
-           distanceM = 0;
-           distanceN = 0;
-           %Module.
-           currentObject = object.getArray(m,n); %Throws errors.
-           arrayToBeTreated = currentObject.numericize();
-           currentSize = size(arrayToBeTreated);
-           if (m ~= 1)
-               for i=1:(m-1)
-                   currentObject = object.getArray(i,1);
-                   distanceM = distanceM + currentObject.getWidth();
-               end
-           end
-           if (n ~= 1)
-               for i = 1:(n-1)
-                   currentObject = object.getArray(1,i);
-                   distanceN = distanceN + currentObject.getLength();
-               end
-           end
-           for k = 1:currentSize(1)
-               for l = 1:currentSize(2)
-                   object.currentState(distanceM+k, distanceN+l) = arrayToBeTreated(k,l);
-               end
-           end
-       end
-       
        function show(object)
            %Dispays, on the current grafical figure, a representation of
            %the image.
@@ -150,14 +122,7 @@ classdef SLMRegroupement < TypeVerifiable
            
            %(Declaration and definition) of variables.
            %Module.
-           val = object.currentState();
-           imagesc(val);
- %         image(object.numericize());pause(.001)
-           colormap(gray(SLMPixel.getMaximumGrayscale())); %Sets colormap to gray values.
-           set(gca, 'CLim', [SLMPixel.getMinimumGrayscale(), SLMPixel.getMaximumGrayscale()]); %Makes the colormap limits minimum 0 and the maximum 1. (otherwise -1 and 1)
-           axis off;
-           set(gca,'units','pixels','position',[0 0 object.pixWidth object.pixLength]); %Bottom left corner is 0,0
-   %      axis off
+           
       
          %imshow(object.numericize);
        end
@@ -291,9 +256,8 @@ classdef SLMRegroupement < TypeVerifiable
            %    @n : the column in which the array is found.
            %    @value : the value that is set to the array.
            
-               object.getArray(m, n).makeGray(value, 1);
-               object.numericize(m, n);
-               object.show();
+               object.getArray(m, n).grayscale = value;
+               object.regroupement(m,n).show();
         end
        
        function result = getArray(object, positionM, positionN)
@@ -336,7 +300,7 @@ classdef SLMRegroupement < TypeVerifiable
            %%%FUNCTION REQUEST'S INPUT FROM USER.
        end
        
-      function result = numericizeRegroupement(object)
+       function result = numericizeRegroupement(object)
            %Returns an array that represents the current state of the
            %objects in the regroupement.
            %    @object : the regroupement for which a numerical
